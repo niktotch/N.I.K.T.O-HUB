@@ -1,0 +1,603 @@
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local SubTitle = Instance.new("TextLabel")
+local ScrollingFrame = Instance.new("ScrollingFrame")
+local ToggleButton = Instance.new("ImageButton")
+
+-- Настройки ScreenGui
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Name = "N.I.K.T.O Project"
+
+-- Основное окно
+MainFrame.Parent = ScreenGui
+MainFrame.Size = UDim2.new(0, 400, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BackgroundTransparency = 0.1
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+-- Скругление основного окна
+local mainCorner = Instance.new("UICorner", MainFrame)
+mainCorner.CornerRadius = UDim.new(0, 20)
+
+-- Фоновое изображение
+local BackgroundImage = Instance.new("ImageLabel")
+BackgroundImage.Parent = MainFrame
+BackgroundImage.Size = UDim2.new(1, 0, 1, 0)
+BackgroundImage.Image = "rbxassetid://77460098773797"
+BackgroundImage.ZIndex = 0
+BackgroundImage.BorderSizePixel = 0
+local bgCorner = Instance.new("UICorner", BackgroundImage)
+bgCorner.CornerRadius = UDim.new(0, 20)
+
+-- Заголовок
+Title.Parent = MainFrame
+Title.Size = UDim2.new(1, -20, 0.15, -10)
+Title.Position = UDim2.new(0, 10, 0, 10)
+Title.BackgroundColor3 = Color3.fromRGB(21, 21, 21)
+Title.Text = "👽 N.I.K.T.O HUB 🛸"
+Title.TextColor3 = Color3.fromRGB(139, 0, 0)
+Title.Font = Enum.Font.GothamBlack
+Title.TextSize = 36
+Title.TextXAlignment = Enum.TextXAlignment.Center
+local titleCorner = Instance.new("UICorner", Title)
+titleCorner.CornerRadius = UDim.new(0, 8)
+
+-- Подзаголовок
+SubTitle.Parent = MainFrame
+SubTitle.Size = UDim2.new(1, -20, 0.1, -10)
+SubTitle.Position = UDim2.new(0, 10, 0, 60)
+SubTitle.BackgroundTransparency = 1
+SubTitle.Text = "- Supported by SkyDOXn -"
+SubTitle.TextColor3 = Color3.new(1, 1, 1)
+SubTitle.Font = Enum.Font.Gotham
+SubTitle.TextSize = 18
+SubTitle.TextXAlignment = Enum.TextXAlignment.Center
+
+-- Скроллинг меню
+ScrollingFrame.Parent = MainFrame
+ScrollingFrame.Size = UDim2.new(1, -20, 0.75, -10)
+ScrollingFrame.Position = UDim2.new(0, 10, 0, 90)
+ScrollingFrame.BackgroundTransparency = 1
+ScrollingFrame.ScrollBarThickness = 8
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+-- Кнопка переключения
+ToggleButton.Parent = ScreenGui
+ToggleButton.Size = UDim2.new(0, 69, 0, 69)
+ToggleButton.Position = UDim2.new(0.5, -34.5, 0, 10)
+ToggleButton.Image = "rbxassetid://104130906333615"
+ToggleButton.ScaleType = Enum.ScaleType.Fit
+ToggleButton.BackgroundTransparency = 1
+ToggleButton.AnchorPoint = Vector2.new(0.5, 0)
+ToggleButton.Draggable = true
+local toggleButtonCorner = Instance.new("UICorner", ToggleButton)
+toggleButtonCorner.CornerRadius = UDim.new(0, 12)
+
+-- Логика переключения с анимацией
+local TweenService = game:GetService("TweenService")
+local toggleState = true
+local isAnimating = false
+
+local function toggleUI(state)
+    if isAnimating then return end
+    isAnimating = true
+
+    local targetSize = state and UDim2.new(0, 400, 0, 400) or UDim2.new(0, 0, 0, 0)
+    local targetPosition = state and UDim2.new(0.5, -200, 0.5, -200) or UDim2.new(0.5, 0, 0.5, 0)
+    local targetTransparency = state and 0.1 or 1
+
+    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local tween = TweenService:Create(MainFrame, tweenInfo, {
+        Size = targetSize,
+        Position = targetPosition,
+        BackgroundTransparency = targetTransparency
+    })
+
+    for _, child in ipairs(MainFrame:GetChildren()) do
+        if child:IsA("GuiObject") then
+            child.Visible = state
+        end
+    end
+
+    tween:Play()
+    tween.Completed:Connect(function()
+        if not state then
+            MainFrame.Visible = false
+        end
+        isAnimating = false
+    end)
+
+    if state then
+        MainFrame.Visible = true
+    end
+end
+
+ToggleButton.MouseButton1Click:Connect(function()
+    toggleState = not toggleState
+    toggleUI(toggleState)
+end)
+
+-- Исправленная система кнопок (симметричные колонки)
+local buttonWidth = 150
+local buttonHeight = 40
+local columnSpacing = 20
+local rowSpacing = 10
+local columnsY = {0, 0}
+local currentColumn = 1
+
+local defaultButtonColor = Color3.fromRGB(33, 33, 33)
+local buttonStrokeColor = Color3.fromRGB(152, 0, 24)
+
+local function addButton(name, callback)
+    local Button = Instance.new("TextButton")
+    Button.Parent = ScrollingFrame
+    Button.Size = UDim2.new(0, buttonWidth, 0, buttonHeight)
+    Button.AnchorPoint = Vector2.new(0.5, 0)
+    
+    -- Центрирование колонок
+    local columnIndex = currentColumn
+    local xOffset = (columnIndex == 1) and (-buttonWidth/2 - columnSpacing/2) or (buttonWidth/2 + columnSpacing/2)
+    Button.Position = UDim2.new(0.5, xOffset, 0, columnsY[columnIndex])
+    
+    columnsY[columnIndex] = columnsY[columnIndex] + buttonHeight + rowSpacing
+    currentColumn = currentColumn == 1 and 2 or 1
+    
+    -- Синхронизация высоты колонок
+    local maxY = math.max(columnsY[1], columnsY[2])
+    ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, maxY)
+
+    Button.BackgroundColor3 = defaultButtonColor
+    Button.Text = name
+    Button.TextColor3 = Color3.new(1, 1, 1)
+    Button.Font = Enum.Font.GothamBold
+    Button.TextSize = 14
+    Button.AutoButtonColor = false
+
+    local buttonStroke = Instance.new("UIStroke", Button)
+    buttonStroke.Thickness = 3
+    buttonStroke.Color = buttonStrokeColor
+
+    local buttonCorner = Instance.new("UICorner", Button)
+    buttonCorner.CornerRadius = UDim.new(0, 8)
+
+    -- Анимации
+    local initialSize = Button.Size
+    local hoverSize = UDim2.new(initialSize.X.Scale, initialSize.X.Offset + 6, initialSize.Y.Scale, initialSize.Y.Offset + 6)
+    local clickSize = UDim2.new(initialSize.X.Scale, initialSize.X.Offset - 6, initialSize.Y.Scale, initialSize.Y.Offset - 6)
+
+    Button.MouseButton1Click:Connect(function()
+        local tweenInfo = TweenInfo.new(0.1, Enum.EasingStyle.Linear)
+        TweenService:Create(Button, tweenInfo, {Size = clickSize}):Play()
+        task.delay(0.1, function()
+            callback()
+            TweenService:Create(Button, tweenInfo, {Size = initialSize}):Play()
+        end)
+    end)
+
+    Button.MouseEnter:Connect(function()
+        TweenService:Create(Button, TweenInfo.new(0.1), {Size = hoverSize}):Play()
+    end)
+
+    Button.MouseLeave:Connect(function()
+        TweenService:Create(Button, TweenInfo.new(0.1), {Size = initialSize}):Play()
+    end)
+end
+
+-- Добавление кнопок (функции без изменений)
+addButton("EasierGraphics", function()
+    for _, part in pairs(workspace:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Material = Enum.Material.Plastic
+            part.Reflectance = 0
+            part.CastShadow = false
+        elseif part:IsA("ParticleEmitter") then
+            part.Enabled = false
+        elseif part:IsA("MeshPart") then
+            part.TextureID = ""
+            part.Material = Enum.Material.Plastic
+        end
+    end
+    game.Lighting.Ambient = Color3.fromRGB(70, 70, 70)
+    game.Lighting.Brightness = 1
+end)
+
+addButton("FullBright", function()
+    game.Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+    game.Lighting.Brightness = 2
+    game.Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+end)
+
+addButton("DisableSimplifyLighting", function()
+    game.Lighting.Technology = Enum.Technology.Compatibility
+    game.Lighting.ShadowSoftness = 0
+    game.Lighting.EnvironmentDiffuseScale = 0
+    game.Lighting.EnvironmentSpecularScale = 0
+end)
+
+addButton("ReduceAntiAliasing", function()
+    game:GetService("Rendering"):SetCore("AntiAliasing", Enum.AntiAliasingLevel.Two)
+end)
+
+addButton("Day", function()
+    game.Lighting.TimeOfDay = "08:00:00"
+end)
+
+addButton("Night", function()
+    game.Lighting.TimeOfDay = "00:00:00"
+end)
+
+addButton("DisableParticles", function()
+    for _, particle in pairs(workspace:GetDescendants()) do
+        if particle:IsA("ParticleEmitter") then
+            particle:Destroy()
+        end
+    end
+end)
+
+addButton("LowPolyMode", function()
+    for _, part in pairs(workspace:GetDescendants()) do
+        if part:IsA("MeshPart") or part:IsA("UnionOperation") then
+            part.Material = Enum.Material.Plastic
+            part.RenderFidelity = Enum.RenderFidelity.Performance
+        end
+    end
+end)
+
+addButton("HideUselessChunks", function()
+    game.Workspace.StreamingMinRadius = 0
+    game.Workspace.StreamingTargetRadius = 500
+end)
+
+addButton("SetLowGraphics", function()
+    game:GetService("GraphicsSettings"):SetQualityLevel(1)
+end)
+
+addButton("AntiFog", function()
+    game.Lighting.FogStart = 100000
+    game.Lighting.FogEnd = 1000000
+end)
+
+addButton("DisableShadows", function()
+    for _, part in pairs(workspace:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CastShadow = false
+        end
+    end
+end)
+
+addButton("DisableVSync", function()
+    pcall(function() setfpscap(9999) end)
+end)
+
+addButton("SetFpsCapMax", function()
+    pcall(function() setfpscap(99999) end)
+end)
+
+addButton("HideSkybox", function()
+    game.Lighting.Sky = nil
+end)
+
+addButton("LowerChunks", function()
+    game.Workspace.StreamingMinRadius = 200
+    game.Workspace.StreamingTargetRadius = 500
+end)
+
+addButton("Infinite Yield", function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+end)
+
+addButton("Tp Tool", function()
+    loadstring(game:HttpGet('https://pastebin.com/raw/QnkYHMXm'))()
+end)
+
+addButton("ResetCharacter", function()
+    game.Players.LocalPlayer.Character:BreakJoints()
+end)
+
+return ScreenGui local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local SubTitle = Instance.new("TextLabel")
+local ScrollingFrame = Instance.new("ScrollingFrame")
+local ToggleButton = Instance.new("ImageButton")
+
+-- Настройки ScreenGui
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Name = "N.I.K.T.O Project"
+
+-- Основное окно
+MainFrame.Parent = ScreenGui
+MainFrame.Size = UDim2.new(0, 400, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BackgroundTransparency = 0.1
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+-- Скругление основного окна
+local mainCorner = Instance.new("UICorner", MainFrame)
+mainCorner.CornerRadius = UDim.new(0, 20)
+
+-- Фоновое изображение
+local BackgroundImage = Instance.new("ImageLabel")
+BackgroundImage.Parent = MainFrame
+BackgroundImage.Size = UDim2.new(1, 0, 1, 0)
+BackgroundImage.Image = "rbxassetid://77460098773797"
+BackgroundImage.ZIndex = 0
+BackgroundImage.BorderSizePixel = 0
+local bgCorner = Instance.new("UICorner", BackgroundImage)
+bgCorner.CornerRadius = UDim.new(0, 20)
+
+-- Заголовок
+Title.Parent = MainFrame
+Title.Size = UDim2.new(1, -20, 0.15, -10)
+Title.Position = UDim2.new(0, 10, 0, 10)
+Title.BackgroundColor3 = Color3.fromRGB(21, 21, 21)
+Title.Text = "👽 N.I.K.T.O HUB 🛸"
+Title.TextColor3 = Color3.fromRGB(139, 0, 0)
+Title.Font = Enum.Font.GothamBlack
+Title.TextSize = 36
+Title.TextXAlignment = Enum.TextXAlignment.Center
+local titleCorner = Instance.new("UICorner", Title)
+titleCorner.CornerRadius = UDim.new(0, 8)
+
+-- Подзаголовок
+SubTitle.Parent = MainFrame
+SubTitle.Size = UDim2.new(1, -20, 0.1, -10)
+SubTitle.Position = UDim2.new(0, 10, 0, 60)
+SubTitle.BackgroundTransparency = 1
+SubTitle.Text = "- Supported by SkyDOXn -"
+SubTitle.TextColor3 = Color3.new(1, 1, 1)
+SubTitle.Font = Enum.Font.Gotham
+SubTitle.TextSize = 18
+SubTitle.TextXAlignment = Enum.TextXAlignment.Center
+
+-- Скроллинг меню
+ScrollingFrame.Parent = MainFrame
+ScrollingFrame.Size = UDim2.new(1, -20, 0.75, -10)
+ScrollingFrame.Position = UDim2.new(0, 10, 0, 90)
+ScrollingFrame.BackgroundTransparency = 1
+ScrollingFrame.ScrollBarThickness = 8
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+-- Кнопка переключения
+ToggleButton.Parent = ScreenGui
+ToggleButton.Size = UDim2.new(0, 69, 0, 69)
+ToggleButton.Position = UDim2.new(0.5, -34.5, 0, 10)
+ToggleButton.Image = "rbxassetid://104130906333615"
+ToggleButton.ScaleType = Enum.ScaleType.Fit
+ToggleButton.BackgroundTransparency = 1
+ToggleButton.AnchorPoint = Vector2.new(0.5, 0)
+ToggleButton.Draggable = true
+local toggleButtonCorner = Instance.new("UICorner", ToggleButton)
+toggleButtonCorner.CornerRadius = UDim.new(0, 12)
+
+-- Логика переключения с анимацией
+local TweenService = game:GetService("TweenService")
+local toggleState = true
+local isAnimating = false
+
+local function toggleUI(state)
+    if isAnimating then return end
+    isAnimating = true
+
+    local targetSize = state and UDim2.new(0, 400, 0, 400) or UDim2.new(0, 0, 0, 0)
+    local targetPosition = state and UDim2.new(0.5, -200, 0.5, -200) or UDim2.new(0.5, 0, 0.5, 0)
+    local targetTransparency = state and 0.1 or 1
+
+    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local tween = TweenService:Create(MainFrame, tweenInfo, {
+        Size = targetSize,
+        Position = targetPosition,
+        BackgroundTransparency = targetTransparency
+    })
+
+    for _, child in ipairs(MainFrame:GetChildren()) do
+        if child:IsA("GuiObject") then
+            child.Visible = state
+        end
+    end
+
+    tween:Play()
+    tween.Completed:Connect(function()
+        if not state then
+            MainFrame.Visible = false
+        end
+        isAnimating = false
+    end)
+
+    if state then
+        MainFrame.Visible = true
+    end
+end
+
+ToggleButton.MouseButton1Click:Connect(function()
+    toggleState = not toggleState
+    toggleUI(toggleState)
+end)
+
+-- Исправленная система кнопок (симметричные колонки)
+local buttonWidth = 150
+local buttonHeight = 40
+local columnSpacing = 20
+local rowSpacing = 10
+local columnsY = {0, 0}
+local currentColumn = 1
+
+local defaultButtonColor = Color3.fromRGB(33, 33, 33)
+local buttonStrokeColor = Color3.fromRGB(152, 0, 24)
+
+local function addButton(name, callback)
+    local Button = Instance.new("TextButton")
+    Button.Parent = ScrollingFrame
+    Button.Size = UDim2.new(0, buttonWidth, 0, buttonHeight)
+    Button.AnchorPoint = Vector2.new(0.5, 0)
+    
+    -- Центрирование колонок
+    local columnIndex = currentColumn
+    local xOffset = (columnIndex == 1) and (-buttonWidth/2 - columnSpacing/2) or (buttonWidth/2 + columnSpacing/2)
+    Button.Position = UDim2.new(0.5, xOffset, 0, columnsY[columnIndex])
+    
+    columnsY[columnIndex] = columnsY[columnIndex] + buttonHeight + rowSpacing
+    currentColumn = currentColumn == 1 and 2 or 1
+    
+    -- Синхронизация высоты колонок
+    local maxY = math.max(columnsY[1], columnsY[2])
+    ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, maxY)
+
+    Button.BackgroundColor3 = defaultButtonColor
+    Button.Text = name
+    Button.TextColor3 = Color3.new(1, 1, 1)
+    Button.Font = Enum.Font.GothamBold
+    Button.TextSize = 14
+    Button.AutoButtonColor = false
+
+    local buttonStroke = Instance.new("UIStroke", Button)
+    buttonStroke.Thickness = 3
+    buttonStroke.Color = buttonStrokeColor
+
+    local buttonCorner = Instance.new("UICorner", Button)
+    buttonCorner.CornerRadius = UDim.new(0, 8)
+
+    -- Анимации
+    local initialSize = Button.Size
+    local hoverSize = UDim2.new(initialSize.X.Scale, initialSize.X.Offset + 6, initialSize.Y.Scale, initialSize.Y.Offset + 6)
+    local clickSize = UDim2.new(initialSize.X.Scale, initialSize.X.Offset - 6, initialSize.Y.Scale, initialSize.Y.Offset - 6)
+
+    Button.MouseButton1Click:Connect(function()
+        local tweenInfo = TweenInfo.new(0.1, Enum.EasingStyle.Linear)
+        TweenService:Create(Button, tweenInfo, {Size = clickSize}):Play()
+        task.delay(0.1, function()
+            callback()
+            TweenService:Create(Button, tweenInfo, {Size = initialSize}):Play()
+        end)
+    end)
+
+    Button.MouseEnter:Connect(function()
+        TweenService:Create(Button, TweenInfo.new(0.1), {Size = hoverSize}):Play()
+    end)
+
+    Button.MouseLeave:Connect(function()
+        TweenService:Create(Button, TweenInfo.new(0.1), {Size = initialSize}):Play()
+    end)
+end
+
+-- Добавление кнопок (функции без изменений)
+addButton("EasierGraphics", function()
+    for _, part in pairs(workspace:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Material = Enum.Material.Plastic
+            part.Reflectance = 0
+            part.CastShadow = false
+        elseif part:IsA("ParticleEmitter") then
+            part.Enabled = false
+        elseif part:IsA("MeshPart") then
+            part.TextureID = ""
+            part.Material = Enum.Material.Plastic
+        end
+    end
+    game.Lighting.Ambient = Color3.fromRGB(70, 70, 70)
+    game.Lighting.Brightness = 1
+end)
+
+addButton("FullBright", function()
+    game.Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+    game.Lighting.Brightness = 2
+    game.Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+end)
+
+addButton("DisableSimplifyLighting", function()
+    game.Lighting.Technology = Enum.Technology.Compatibility
+    game.Lighting.ShadowSoftness = 0
+    game.Lighting.EnvironmentDiffuseScale = 0
+    game.Lighting.EnvironmentSpecularScale = 0
+end)
+
+addButton("ReduceAntiAliasing", function()
+    game:GetService("Rendering"):SetCore("AntiAliasing", Enum.AntiAliasingLevel.Two)
+end)
+
+addButton("Day", function()
+    game.Lighting.TimeOfDay = "08:00:00"
+end)
+
+addButton("Night", function()
+    game.Lighting.TimeOfDay = "00:00:00"
+end)
+
+addButton("DisableParticles", function()
+    for _, particle in pairs(workspace:GetDescendants()) do
+        if particle:IsA("ParticleEmitter") then
+            particle:Destroy()
+        end
+    end
+end)
+
+addButton("LowPolyMode", function()
+    for _, part in pairs(workspace:GetDescendants()) do
+        if part:IsA("MeshPart") or part:IsA("UnionOperation") then
+            part.Material = Enum.Material.Plastic
+            part.RenderFidelity = Enum.RenderFidelity.Performance
+        end
+    end
+end)
+
+addButton("HideUselessChunks", function()
+    game.Workspace.StreamingMinRadius = 0
+    game.Workspace.StreamingTargetRadius = 500
+end)
+
+addButton("SetLowGraphics", function()
+    game:GetService("GraphicsSettings"):SetQualityLevel(1)
+end)
+
+addButton("AntiFog", function()
+    game.Lighting.FogStart = 100000
+    game.Lighting.FogEnd = 1000000
+end)
+
+addButton("DisableShadows", function()
+    for _, part in pairs(workspace:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CastShadow = false
+        end
+    end
+end)
+
+addButton("DisableVSync", function()
+    pcall(function() setfpscap(9999) end)
+end)
+
+addButton("SetFpsCapMax", function()
+    pcall(function() setfpscap(99999) end)
+end)
+
+addButton("HideSkybox", function()
+    game.Lighting.Sky = nil
+end)
+
+addButton("LowerChunks", function()
+    game.Workspace.StreamingMinRadius = 200
+    game.Workspace.StreamingTargetRadius = 500
+end)
+
+addButton("Infinite Yield", function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+end)
+
+addButton("Tp Tool", function()
+    loadstring(game:HttpGet('https://pastebin.com/raw/QnkYHMXm'))()
+end)
+
+addButton("ResetCharacter", function()
+    game.Players.LocalPlayer.Character:BreakJoints()
+end)
+
+return ScreenGui
