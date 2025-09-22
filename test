@@ -1,0 +1,32 @@
+-- This Lua program generates a Roblox script function that runs every time the player respawns.
+
+-- Define the Roblox script function
+local function onPlayerRespawn(player)
+    -- Add your custom logic here
+    print("Player", player.Name, "has respawned!")
+end
+
+-- Connect the function to the PlayerAdded event
+game.Players.PlayerAdded:Connect(function(player)
+    -- Connect the onPlayerRespawn function to the CharacterAdded event of the player
+    player.CharacterAdded:Connect(function(character)
+        -- Check if the character is humanoid
+        if character:FindFirstChild("Humanoid") then
+            -- Connect the onPlayerRespawn function to the Died event of the humanoid
+            character.Humanoid.Died:Connect(function()
+                -- Call the onPlayerRespawn function when the player respawns
+                onPlayerRespawn(player)
+            end)
+        end
+    end)
+end)
+
+-- Example usage
+print("[INFO] Starting program.")
+
+-- Simulate a player joining the game
+local player = game.Players:GetChildren()[1]  -- Assuming there is at least one player in the game
+local character = player.Character or player.CharacterAdded:Wait()
+character.Humanoid.Health = 0  -- Simulate the player's death
+
+print("[INFO] Program finished.")
